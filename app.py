@@ -5,7 +5,6 @@ import fitz  # PyMuPDF
 from PIL import Image
 import io
 from datetime import datetime
-import numpy as np
 
 st.title("Reimbursement Form - Sports Booster Organization")
 
@@ -28,19 +27,27 @@ canvas_result = st_canvas(
 receipts = st.file_uploader("Upload Receipts (camera supported)", accept_multiple_files=True, type=["png", "jpg", "jpeg"])
 
 if st.button("Generate PDF"):
-    pdf = fitz.open("scan.pdf")
-    page = pdf[0]
+    pdf = fitz.open()
+    page = pdf.new_page(width=595, height=842)  # A4 size
 
-    page.insert_text((100, 150), f"Amount: {amount}", fontsize=12)
-    page.insert_text((100, 170), f"Purpose: {purpose}", fontsize=12)
-    page.insert_text((100, 190), f"Date: {date.strftime('%Y-%m-%d')}", fontsize=12)
+    y = 50
+    line_height = 20
+    page.insert_text((50, y), "Reimbursement Form - Sports Booster Organization", fontsize=14)
+    y += 2 * line_height
+    page.insert_text((50, y), f"Amount: {amount}", fontsize=12)
+    y += line_height
+    page.insert_text((50, y), f"Purpose: {purpose}", fontsize=12)
+    y += line_height
+    page.insert_text((50, y), f"Date: {date.strftime('%Y-%m-%d')}", fontsize=12)
+    y += 2 * line_height
+    page.insert_text((50, y), "Signature:", fontsize=12)
 
     if canvas_result.image_data is not None:
         sig_img = Image.fromarray(canvas_result.image_data.astype('uint8'))
         sig_buf = io.BytesIO()
         sig_img.save(sig_buf, format="PNG")
         sig_buf.seek(0)
-        rect = fitz.Rect(100, 500, 300, 550)
+        rect = fitz.Rect(120, y - 5, 320, y + 45)
         page.insert_image(rect, stream=sig_buf.read())
 
     for receipt in receipts:
