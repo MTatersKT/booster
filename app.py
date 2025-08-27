@@ -5,6 +5,7 @@ import fitz  # PyMuPDF
 from PIL import Image
 import io
 from datetime import datetime
+import numpy as np
 
 st.title("Reimbursement Form - Sports Booster Organization")
 
@@ -27,26 +28,21 @@ canvas_result = st_canvas(
 receipts = st.file_uploader("Upload Receipts (camera supported)", accept_multiple_files=True, type=["png", "jpg", "jpeg"])
 
 if st.button("Generate PDF"):
-    template_path = "template_page.pdf"
-    pdf = fitz.open(template_path)
+    pdf = fitz.open("scan.pdf")
     page = pdf[0]
 
-    # Overlay text fields
     page.insert_text((100, 150), f"Amount: {amount}", fontsize=12)
     page.insert_text((100, 170), f"Purpose: {purpose}", fontsize=12)
     page.insert_text((100, 190), f"Date: {date.strftime('%Y-%m-%d')}", fontsize=12)
 
-    # Add signature image if available
     if canvas_result.image_data is not None:
         sig_img = Image.fromarray(canvas_result.image_data.astype('uint8'))
         sig_buf = io.BytesIO()
         sig_img.save(sig_buf, format="PNG")
         sig_buf.seek(0)
-        sig_pdf = fitz.open(stream=sig_buf.read(), filetype="png")
-        page.show_pdf_page(fitz.Rect(100, 210, 300, 260), sig_pdf, 0)
-        sig_pdf.close()
+        rect = fitz.Rect(100, 500, 300, 550)
+        page.insert_image(rect, stream=sig_buf.read())
 
-    # Add receipt images to new pages
     for receipt in receipts:
         image = Image.open(receipt)
         img_buf = io.BytesIO()
